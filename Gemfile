@@ -25,6 +25,7 @@ group :development do
   gem "solargraph",          "0.53.4"
   gem "irb",                 "1.10.0"
   gem "repl_type_completor", "0.1.2"
+  gem "rubocop"
 end
 
 group :test do
