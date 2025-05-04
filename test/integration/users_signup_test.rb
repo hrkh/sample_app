@@ -11,5 +11,9 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
     end
     assert_response :unprocessable_entity
     assert_template 'users/new'
+    assert_select 'div#error_explanation li', "Name can't be blank"
+    assert_select 'div#error_explanation li', 'Email is invalid'
+    assert_select 'div#error_explanation li', 'Password is too short (minimum is 6 characters)'
+    assert_select 'div#error_explanation li', "Password confirmation doesn't match Password"
   end
 end
