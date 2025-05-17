@@ -3,6 +3,7 @@ require 'test_helper'
 class PasswordResets < ActionDispatch::IntegrationTest
   def setup
     ActionMailer::Base.deliveries.clear
+    @user = users(:michael)
   end
 end
 
@@ -24,7 +25,6 @@ end
 class PasswordResetForm < PasswordResets
   def setup
     super
-    @user = users(:michael)
     post password_resets_path,
          params: { password_reset: { email: @user.email } }
     @reset_user = assigns(:user)
@@ -86,8 +86,37 @@ class PasswordUpdateTest < PasswordResetForm
           params: { email: @reset_user.email,
                     user: { password: 'foobaz',
                             password_confirmation: 'foobaz' } }
+    assert_nil @reset_user.reload.reset_digest
     assert is_logged_in?
     assert_not flash.empty?
     assert_redirected_to @reset_user
+  end
+end
+
+class ExpiredToken < PasswordResets
+  def setup
+    super
+    # パスワードリセットのトークンを作成する
+    post password_resets_path,
+         params: { password_reset: { email: @user.email } }
+    @reset_user = assigns(:user)
+    # トークンを手動で失効させる
+    @reset_user.update_attribute(:reset_sent_at, 3.hours.ago)
+    # ユーザーのパスワードの更新を試みる
+    patch password_reset_path(@reset_user.reset_token),
+          params: { email: @reset_user.email,
+                    user: { password: 'foobar',
+                            password_confirmation: 'foobar' } }
+  end
+end
+
+class ExpiredTokenTest < ExpiredToken
+  test 'should redirect to the password-reset page' do
+    assert_redirected_to new_password_reset_url
+  end
+
+  test "should include the word 'expired' on the password-reset page" do
+    follow_redirect!
+    assert_match(/expired/i, response.body)
   end
 end
