@@ -29,5 +29,11 @@ class SiteLayoutTest < ActionDispatch::IntegrationTest
     assert_select 'a[href=?]', about_path, text: 'About'
     assert_select 'a[href=?]', contact_path, text: 'Contact'
     assert_select 'a[href=?]', 'https://news.railstutorial.org/', text: 'News'
+
+    get root_path
+    assert_select 'a[href=?]', following_user_path(@user)
+    assert_select 'strong[id=?]', 'following', text: @user.following.count.to_s
+    assert_select 'a[href=?]', followers_user_path(@user)
+    assert_select 'strong[id=?]', 'followers', text: @user.followers.count.to_s
   end
 end
